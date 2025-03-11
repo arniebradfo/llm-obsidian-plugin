@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "llm-obsidian-plugin",
+	"name": "LLM Test",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "Tell LLM to do things",
+	"author": "James Bradford",
+	"authorUrl": "https://bradford.digital",
+	"fundingUrl": "https://worldwildlife.org/donate",
+	"isDesktopOnly": true
 }

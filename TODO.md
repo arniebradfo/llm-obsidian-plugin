@@ -10,17 +10,23 @@ Weelll, it works, now what
 
 ## Workflows
 
+### Rewrite selection
+- highlight section to rewrite
+- run command "LLM Edit"
+- open modal: 
+  - instructions + submit button, 
+  - quick edit buttons, 
+  - current selection as markdown
+  - ---run---
+  - show stream output
+  - stop button / apply button / (or try again)
+
 ### Chat in md Editor
 - type out a request, run "chat with context"
 - system takes entire page as question context
 
-### Rewrite selection
-- highlight section to rewrite
-  1. replace rewrite, undo/redo to toggle changes
-  2. show diff? in commented format
-  3. show changes merged with strike-through/highlight? Super hard to accept/deny
-
-### Chat in sidepanel
+### Chat in side panel
+- save histories as files
 
 ### Code-like Interactions
 - Cursor-based operations:

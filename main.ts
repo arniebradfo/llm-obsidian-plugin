@@ -57,19 +57,18 @@ export default class HellowWorldPlugin extends Plugin {
 					messages: [
 						{ role: "user", content: "Why is the sky blue?" },
 					],
-					// stream: true,
+					stream: true,
 				});
-				MarkdownRenderer.render(this.app, response.message.content, modal.contentEl, "", this);
-				/* modal.onClose = () => {
+				modal.onClose = () => {
 					response.abort();
 				};
+				let currentContent = ''
 				for await (const part of response) {
 					console.log(part.message.content);
-					const currentContent = modal.contentEl.getText();
-					MarkdownRenderer.render(this.app, currentContent + part.message.content, modal.contentEl, "", this);
-					// modal.contentEl.setText(currentContent + part.message.content);
-					// modal.setContent(currentContent + part.message.content);
-				} */
+					currentContent += part.message.content;
+					modal.contentEl.empty();
+					MarkdownRenderer.render(this.app, currentContent, modal.contentEl, "", this);
+				}
 			},
 		});
 		// This adds an editor command that can perform some operation on the current editor instance

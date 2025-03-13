@@ -3,9 +3,9 @@ import {
 	WorkspaceLeaf,
 	TextAreaComponent,
 	ButtonComponent,
-  Scope,
+	Scope,
 } from "obsidian";
-import ollama from "ollama";
+import ollama, { Message } from "ollama";
 import { MarkdownRendererComponent } from "src/components/MarkdownRendererComponent";
 
 export const VIEW_TYPE_CHAT = "ollm-chat";
@@ -14,6 +14,7 @@ export class ChatView extends ItemView {
 	textareaEl: TextAreaComponent;
 	submitButton: ButtonComponent;
 	markdownRendererEl: MarkdownRendererComponent;
+	chatHistory: Message[] = [];
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -24,7 +25,7 @@ export class ChatView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Chat";
+		return "OLLM Chat";
 	}
 
 	async onOpen() {
@@ -45,48 +46,54 @@ export class ChatView extends ItemView {
 			cls: "ollm-chat-view-prompt-container",
 		});
 
-		this.textareaEl = new TextAreaComponent(promptContainerEl);
-    this.scope = new Scope()
-    this.scope.register(
-      ["Mod"],
-      "Enter",
-      () => {
-        console.log("Enter");
-        if (this.textareaEl.getValue().length > 0) {
-          this.runLlm();
-        }
-      }
-    );
+		this.textareaEl = new TextAreaComponent(promptContainerEl)
+    this.textareaEl.inputEl.focus();
+
+		this.scope = new Scope();
+		this.scope.register(["Mod"], "Enter", () => {
+			this.runLlm();
+		});
 
 		this.submitButton = new ButtonComponent(promptContainerEl)
 			.setIcon("send")
 			.onClick(() => {
-        if (this.textareaEl.getValue().length > 0) {
-          this.runLlm();
-        }
+				this.runLlm();
 			});
 	}
 
 	async runLlm() {
 		const prompt = this.textareaEl.getValue();
 
-    this.markdownRendererEl.appendMarkdownText(`${roleBreak}> [!user]\n> ${prompt}${roleBreak}`);
+		if (prompt.length === 0) {
+			return;
+		}
+
+		this.chatHistory.push({ role: "user", content: prompt });
+
+		this.markdownRendererEl.appendMarkdownText(
+			`${roleBreak}> [!user]\n\n${prompt}${roleBreak}`
+		);
 
 		this.textareaEl.setValue("");
 		console.log(prompt);
 
 		const response = await ollama.chat({
 			model: "llama3.2:latest",
-			messages: [{ role: "user", content: prompt }],
+			messages: this.chatHistory,
 			stream: true,
 		});
 
+    let content = ""
 		for await (const part of response) {
 			console.log(part.message.content);
+			content += part.message.content;
 			this.markdownRendererEl.appendMarkdownText(part.message.content);
 		}
 
-
+		this.chatHistory.push({
+			role: "assistant",
+			content,
+		});
 	}
 
 	async onClose() {
@@ -94,4 +101,4 @@ export class ChatView extends ItemView {
 	}
 }
 
-const roleBreak = `\n\n`;
+const roleBreak = `\n\n---\n\n`;

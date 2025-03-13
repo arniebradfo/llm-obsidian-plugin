@@ -1,7 +1,8 @@
 # TODOs
 - add chat interface
 - experiment with tools to execute obsidian commands
-
+- experiment with HoverPopover
+- experiment with EditorSuggest
 
 ## Workflows
 

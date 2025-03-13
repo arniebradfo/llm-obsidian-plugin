@@ -21,6 +21,8 @@ Weelll, it works, now what
   - show stream output
   - stop button / apply button / (or try again)
 
+### EditorSuggest
+
 ### Chat in md Editor
 - type out a request, run "chat with context"
 - system takes entire page as question context

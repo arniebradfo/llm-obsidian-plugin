@@ -1,11 +1,6 @@
 # TODOs
-
-Weelll, it works, now what
-- options
-  - chat in obsidian md editor, highlight responses in [callouts](https://help.obsidian.md/callouts)
-  - highlight text to rewrite
-- Settings: ollama setup
-- RAG? 
+- add chat interface
+- experiment with tools to execute obsidian commands
 
 
 ## Workflows
@@ -22,6 +17,10 @@ Weelll, it works, now what
   - stop button / apply button / (or try again)
 
 ### EditorSuggest
+
+### HoverPopover
+
+### RAG
 
 ### Chat in md Editor
 - type out a request, run "chat with context"
@@ -51,3 +50,7 @@ Weelll, it works, now what
   - Select heading, run "generate outline" to create subsections
   - Select list, run "expand items" to add detail to each point
   - Select code block, run "convert to prose" or "explain code"
+
+
+## Alternatives
+- https://www.caretplugin.ai/ 

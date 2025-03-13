@@ -1,8 +1,17 @@
-/*
+.ollm-chat-view-prompt-container {
+  display: flex;
+  gap: 8px;
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+  position: sticky;
+  bottom: 0;
 
-If your plugin does not need CSS, delete this file.
 
-*/
+  & textarea{
+    flex: 1 1 auto;
+    min-height: 3em;
+  }
+}
+
+.ollm-chat-view-output-container {
+    padding-bottom: 40px;
+}

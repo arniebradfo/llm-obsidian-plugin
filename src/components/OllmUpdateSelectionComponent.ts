@@ -64,7 +64,7 @@ export class OllmUpdateSelectionComponent extends Component {
 	}
 
 	async runRewrite() {
-		const rewritePrompt = `Please rewrite the following text for a 10 year old. The reply should include only the rewritten text, no other text. \n\n---\n\n${this.selectionText}`;
+		const rewritePrompt = `Please rewrite the following text improved clarity and readability. The reply should include only the rewritten text, no other text. \n\n---\n\n${this.selectionText}`;
 
 		const response = await ollama.chat({
 			model: "llama3.2:latest",
@@ -73,6 +73,7 @@ export class OllmUpdateSelectionComponent extends Component {
 		});
 
 		this.markdownRendererEl.empty();
+		
 		for await (const part of response) {
 			console.log(part.message.content);
 			this.markdownRendererEl.appendMarkdownText(part.message.content);

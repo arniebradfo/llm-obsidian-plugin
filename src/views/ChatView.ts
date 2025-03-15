@@ -5,7 +5,7 @@ import {
 	ButtonComponent,
 	Scope,
 } from "obsidian";
-import ollama, { Message } from "ollama";
+import ollama, { Message, ToolCall } from "ollama";
 import { MarkdownRendererComponent } from "src/components/MarkdownRendererComponent";
 import { dateTimeTool, handleDateTimeTool } from "src/tools/dateTimeTool";
 
@@ -47,13 +47,13 @@ export class ChatView extends ItemView {
 
 		this.scope = new Scope();
 		this.scope.register(["Mod"], "Enter", () => {
-			this.runLlm();
+			this.chat();
 		});
 
 		this.submitButton = new ButtonComponent(promptContainerEl)
 			.setIcon("send")
 			.onClick(() => {
-				this.runLlm();
+				this.chat();
 			});
 	}
 
@@ -69,7 +69,7 @@ export class ChatView extends ItemView {
 		);
 	}
 
-	async runLlm() {
+	async chat() {
 		const prompt = this.textareaEl.getValue();
 
 		if (prompt.length === 0) {
@@ -84,10 +84,10 @@ export class ChatView extends ItemView {
 		console.log(prompt);
 
 		const response = await ollama.chat({
-			model: "llama3.2:latest",
+			model,
 			messages: this.chatHistory,
 			stream: true,
-			tools: [dateTimeTool]
+			tools: [dateTimeTool],
 		});
 
 		const assistantMessage: Message = { role: "assistant", content: "" };
@@ -95,26 +95,68 @@ export class ChatView extends ItemView {
 
 		for await (const part of response) {
 			console.log(part.message);
-			
+
 			if (part.message.tool_calls && part.message.tool_calls.length > 0) {
 				for (const toolCall of part.message.tool_calls) {
-					if (toolCall.function.name === "get_current_datetime") {
-						try {
-							const args = typeof toolCall.function.arguments === 'string' 
-								? JSON.parse(toolCall.function.arguments)
-								: toolCall.function.arguments;
-							const result = await handleDateTimeTool(args);
-							assistantMessage.content += result;
-							assistantRenderer.setMarkdownText(assistantMessage.content);
-						} catch (error) {
-							console.error("Error handling datetime tool:", error);
-						}
+					if (assistantMessage.tool_calls) {
+						assistantMessage.tool_calls.push(toolCall);
+					} else {
+						assistantMessage.tool_calls = [toolCall];
 					}
 				}
-			} else if (part.message.content) {
-				assistantMessage.content += part.message.content;
-				assistantRenderer.setMarkdownText(assistantMessage.content);
 			}
+
+			assistantMessage.content += part.message.content;
+			assistantRenderer.setMarkdownText(assistantMessage.content);
+		}
+
+		this.chatHistory.push(assistantMessage);
+
+		if (assistantMessage.tool_calls) {
+			for (const toolCall of assistantMessage.tool_calls) {
+				this.toolCall(toolCall);
+			}
+		}
+	}
+
+	async toolCall(toolCall: ToolCall) {
+		// if result does not get set, provide an error message to the llm
+		let result = "Error handling tool call";
+		if (toolCall.function.name === "get_current_datetime") {
+			try {
+				const args =
+					typeof toolCall.function.arguments === "string"
+						? JSON.parse(toolCall.function.arguments)
+						: toolCall.function.arguments;
+				result = await handleDateTimeTool(args);
+			} catch (error) {
+				console.error("Error handling datetime tool:", error);
+			}
+		}
+
+		const toolMessage: Message = {
+			role: "tool",
+			content: result,
+			// tool_call_id: toolCall.id,
+		};
+
+		this.chatHistory.push(toolMessage);
+		
+		const response = await ollama.chat({
+			model,
+			messages: this.chatHistory,
+			stream: true,
+			tools: [dateTimeTool],
+		});
+
+		const assistantMessage: Message = { role: "assistant", content: "" };
+		const assistantRenderer = this.createMessageRenderer(assistantMessage);
+
+		for await (const part of response) {
+			console.log(part.message);
+
+			assistantMessage.content += part.message.content;
+			assistantRenderer.setMarkdownText(assistantMessage.content);
 		}
 
 		this.chatHistory.push(assistantMessage);
@@ -124,3 +166,5 @@ export class ChatView extends ItemView {
 		// Nothing to clean up.
 	}
 }
+
+const model = "llama3.2:latest"; // Temporary

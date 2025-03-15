@@ -13,7 +13,7 @@ export const VIEW_TYPE_CHAT = "ollm-chat";
 export class ChatView extends ItemView {
 	textareaEl: TextAreaComponent;
 	submitButton: ButtonComponent;
-	markdownRendererEl: MarkdownRendererComponent;
+	outputContainerEl: HTMLElement;
 	chatHistory: Message[] = [];
 
 	constructor(leaf: WorkspaceLeaf) {
@@ -33,21 +33,16 @@ export class ChatView extends ItemView {
 
 		contentEl.empty();
 
-		const outputContainerEl = contentEl.createEl("div", {
+		this.outputContainerEl = contentEl.createEl("div", {
 			cls: "ollm-chat-view-output-container",
 		});
-		this.markdownRendererEl = new MarkdownRendererComponent(
-			outputContainerEl,
-			this.app,
-			""
-		);
 
 		const promptContainerEl = contentEl.createEl("div", {
 			cls: "ollm-chat-view-prompt-container",
 		});
 
-		this.textareaEl = new TextAreaComponent(promptContainerEl)
-    this.textareaEl.inputEl.focus();
+		this.textareaEl = new TextAreaComponent(promptContainerEl);
+		this.textareaEl.inputEl.focus();
 
 		this.scope = new Scope();
 		this.scope.register(["Mod"], "Enter", () => {
@@ -61,6 +56,18 @@ export class ChatView extends ItemView {
 			});
 	}
 
+	createMessageRenderer(message: Message): MarkdownRendererComponent {
+		const messageEl = this.outputContainerEl.createEl("div", {
+			cls: `ollm-chat-message ollm-chat-message-${message.role}`,
+		});
+
+		return new MarkdownRendererComponent(
+			messageEl,
+			this.app,
+			message.content
+		);
+	}
+
 	async runLlm() {
 		const prompt = this.textareaEl.getValue();
 
@@ -68,11 +75,9 @@ export class ChatView extends ItemView {
 			return;
 		}
 
-		this.chatHistory.push({ role: "user", content: prompt });
-
-		this.markdownRendererEl.appendMarkdownText(
-			`${roleBreak}> [!user]\n\n${prompt}${roleBreak}`
-		);
+		const userMessage: Message = { role: "user", content: prompt };
+		this.chatHistory.push(userMessage);
+		this.createMessageRenderer(userMessage);
 
 		this.textareaEl.setValue("");
 		console.log(prompt);
@@ -83,22 +88,19 @@ export class ChatView extends ItemView {
 			stream: true,
 		});
 
-    let content = ""
+		const assistantMessage: Message = { role: "assistant", content: "" };
+		const assistantRenderer = this.createMessageRenderer(assistantMessage);
+
 		for await (const part of response) {
 			console.log(part.message.content);
-			content += part.message.content;
-			this.markdownRendererEl.appendMarkdownText(part.message.content);
+			assistantMessage.content += part.message.content;
+			assistantRenderer.setMarkdownText(assistantMessage.content);
 		}
 
-		this.chatHistory.push({
-			role: "assistant",
-			content,
-		});
+		this.chatHistory.push(assistantMessage);
 	}
 
 	async onClose() {
 		// Nothing to clean up.
 	}
 }
-
-const roleBreak = `\n\n---\n\n`;

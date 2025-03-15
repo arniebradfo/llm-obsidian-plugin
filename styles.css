@@ -6,12 +6,22 @@
   bottom: 0;
 
 
-  & textarea{
+  & textarea {
     flex: 1 1 auto;
     min-height: 3em;
   }
 }
 
 .ollm-chat-view-output-container {
-    padding-bottom: 40px;
+  padding-bottom: 40px;
+  user-select: auto;
+}
+
+.ollm-chat-message-user {
+  padding: 1px var(--size-4-4);
+  margin-left: var(--size-4-4);
+  border-radius: var(--radius-l);
+  border-bottom-right-radius: 0;
+  background-color: var(--background-secondary-alt);
+  /* border: 1px solid var(--divider-color); */
 }

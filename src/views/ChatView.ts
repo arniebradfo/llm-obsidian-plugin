@@ -7,6 +7,7 @@ import {
 } from "obsidian";
 import ollama, { Message } from "ollama";
 import { MarkdownRendererComponent } from "src/components/MarkdownRendererComponent";
+import { dateTimeTool, handleDateTimeTool } from "src/tools/dateTimeTool";
 
 export const VIEW_TYPE_CHAT = "ollm-chat";
 
@@ -86,15 +87,34 @@ export class ChatView extends ItemView {
 			model: "llama3.2:latest",
 			messages: this.chatHistory,
 			stream: true,
+			tools: [dateTimeTool]
 		});
 
 		const assistantMessage: Message = { role: "assistant", content: "" };
 		const assistantRenderer = this.createMessageRenderer(assistantMessage);
 
 		for await (const part of response) {
-			console.log(part.message.content);
-			assistantMessage.content += part.message.content;
-			assistantRenderer.setMarkdownText(assistantMessage.content);
+			console.log(part.message);
+			
+			if (part.message.tool_calls && part.message.tool_calls.length > 0) {
+				for (const toolCall of part.message.tool_calls) {
+					if (toolCall.function.name === "get_current_datetime") {
+						try {
+							const args = typeof toolCall.function.arguments === 'string' 
+								? JSON.parse(toolCall.function.arguments)
+								: toolCall.function.arguments;
+							const result = await handleDateTimeTool(args);
+							assistantMessage.content += result;
+							assistantRenderer.setMarkdownText(assistantMessage.content);
+						} catch (error) {
+							console.error("Error handling datetime tool:", error);
+						}
+					}
+				}
+			} else if (part.message.content) {
+				assistantMessage.content += part.message.content;
+				assistantRenderer.setMarkdownText(assistantMessage.content);
+			}
 		}
 
 		this.chatHistory.push(assistantMessage);

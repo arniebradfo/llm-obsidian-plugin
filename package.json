@@ -4,6 +4,7 @@
 	"description": "Tell LLM to do things",
 	"main": "main.js",
 	"scripts": {
+		"start": "npm run dev",
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"

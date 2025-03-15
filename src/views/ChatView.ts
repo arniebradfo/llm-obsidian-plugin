@@ -15,7 +15,10 @@ export class ChatView extends ItemView {
 	textareaEl: TextAreaComponent;
 	submitButton: ButtonComponent;
 	outputContainerEl: HTMLElement;
-	chatHistory: Message[] = [];
+	chatHistory: Message[] = [{
+		role: 'system',
+		content: "The assistant chatbot is an a markdown notes editing application called Obsidian"
+	}];
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -71,18 +74,23 @@ export class ChatView extends ItemView {
 
 	async chat() {
 		const prompt = this.textareaEl.getValue();
-
 		if (prompt.length === 0) {
 			return;
 		}
 
-		const userMessage: Message = { role: "user", content: prompt };
+		this.textareaEl.setValue("");
+		await this.chatUser(prompt);
+	}
+
+	async chatUser(content: string) {
+		const userMessage: Message = { role: "user", content };
 		this.chatHistory.push(userMessage);
 		this.createMessageRenderer(userMessage);
+		console.log(content);
+		await this.chatAssistant();
+	}
 
-		this.textareaEl.setValue("");
-		console.log(prompt);
-
+	async chatAssistant() {
 		const response = await ollama.chat({
 			model,
 			messages: this.chatHistory,
@@ -97,12 +105,9 @@ export class ChatView extends ItemView {
 			console.log(part.message);
 
 			if (part.message.tool_calls && part.message.tool_calls.length > 0) {
+				assistantMessage.tool_calls = assistantMessage.tool_calls || [];
 				for (const toolCall of part.message.tool_calls) {
-					if (assistantMessage.tool_calls) {
-						assistantMessage.tool_calls.push(toolCall);
-					} else {
-						assistantMessage.tool_calls = [toolCall];
-					}
+					assistantMessage.tool_calls.push(toolCall);
 				}
 			}
 
@@ -113,14 +118,13 @@ export class ChatView extends ItemView {
 		this.chatHistory.push(assistantMessage);
 
 		if (assistantMessage.tool_calls) {
-			for (const toolCall of assistantMessage.tool_calls) {
-				this.toolCall(toolCall);
-			}
+			await this.chatTool(assistantMessage.tool_calls[0]);
+			// TODO: Handle multiple tool calls
+			// for (const toolCall of assistantMessage.tool_calls) { await this.chatTool(toolCall); }
 		}
 	}
 
-	async toolCall(toolCall: ToolCall) {
-		// if result does not get set, provide an error message to the llm
+	async chatTool(toolCall: ToolCall) {
 		let result = "Error handling tool call";
 		if (toolCall.function.name === "get_current_datetime") {
 			try {
@@ -137,29 +141,12 @@ export class ChatView extends ItemView {
 		const toolMessage: Message = {
 			role: "tool",
 			content: result,
-			// tool_call_id: toolCall.id,
 		};
 
 		this.chatHistory.push(toolMessage);
-		
-		const response = await ollama.chat({
-			model,
-			messages: this.chatHistory,
-			stream: true,
-			tools: [dateTimeTool],
-		});
+		this.createMessageRenderer(toolMessage);
 
-		const assistantMessage: Message = { role: "assistant", content: "" };
-		const assistantRenderer = this.createMessageRenderer(assistantMessage);
-
-		for await (const part of response) {
-			console.log(part.message);
-
-			assistantMessage.content += part.message.content;
-			assistantRenderer.setMarkdownText(assistantMessage.content);
-		}
-
-		this.chatHistory.push(assistantMessage);
+		await this.chatAssistant();
 	}
 
 	async onClose() {

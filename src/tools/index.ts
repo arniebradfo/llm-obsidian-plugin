@@ -1,9 +1,11 @@
 import { dateTimeTool } from "./dateTimeTool";
+import { getCurrentFileContentTool } from "./getCurrrentFileContentTool";
 import { noToolNeeded } from "./noToolNeeded";
 
 const availableChatTools = [
     noToolNeeded,  // this tool is very important, see note in file
     dateTimeTool, 
+    getCurrentFileContentTool
 ];
 
 export const availableTools = availableChatTools.map(

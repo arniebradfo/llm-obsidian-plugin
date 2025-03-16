@@ -1,5 +1,5 @@
 import { ChatTool } from "./chatTools";
-
+import { App } from "obsidian";
 export const dateTimeTool: ChatTool = {
 	tool: {
 		type: "function",
@@ -20,7 +20,7 @@ export const dateTimeTool: ChatTool = {
 			},
 		},
 	},
-	handler: async (params: { format?: "ISO" | "local" }) => {
+	handler: async (app: App, params: { format?: "ISO" | "local" }) => {
 		const now = new Date();
 		return params.format === "local"
 			? now.toLocaleString()

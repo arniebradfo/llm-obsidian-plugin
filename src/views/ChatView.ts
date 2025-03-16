@@ -143,7 +143,7 @@ export class ChatView extends ItemView {
 					typeof toolCall.function.arguments === "string"
 						? JSON.parse(toolCall.function.arguments)
 						: toolCall.function.arguments;
-				result = await handler(args);
+				result = await handler(this.app, args);
 			} catch (error) {
 				console.error("Error handling datetime tool:", error);
 			}

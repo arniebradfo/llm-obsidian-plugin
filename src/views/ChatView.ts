@@ -55,6 +55,17 @@ export class ChatView extends ItemView {
 			.onClick(() => {
 				this.chat();
 			});
+
+		this.resetButton = new ButtonComponent(promptContainerEl)
+			.setIcon("refresh-ccw")
+			.onClick(() => {
+				this.resetChat();
+			});
+	}
+
+	resetChat() {
+		this.chatHistory = [];
+		this.outputContainerEl.empty();
 	}
 
 	createMessageRenderer(message: Message): MarkdownRendererComponent {

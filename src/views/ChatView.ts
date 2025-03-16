@@ -8,6 +8,7 @@ import {
 import ollama, { Message, ToolCall } from "ollama";
 import { MarkdownRendererComponent } from "src/components/MarkdownRendererComponent";
 import { availableTools, toolHandlers } from "src/tools";
+import { noToolNeeded } from "src/tools/noToolNeeded";
 
 export const VIEW_TYPE_CHAT = "ollm-chat";
 
@@ -124,6 +125,22 @@ export class ChatView extends ItemView {
 			assistantRenderer.setMarkdownText(assistantMessage.content);
 		}
 
+		// If the assistant message is a JSON object, call the noToolNeeded tool
+		if (
+			assistantMessage.content[0] === "{" ||
+			assistantMessage.content[0] === "["
+		) {
+			const json = JSON.parse(assistantMessage.content);
+			console.warn('llm invalid tool call?');
+			console.log(json);
+			assistantMessage.tool_calls = [{
+				function: {
+					name: noToolNeeded.tool.function.name,
+					arguments: {},
+				},
+			}]
+		}
+
 		this.chatHistory.push(assistantMessage);
 
 		if (assistantMessage.tool_calls) {
@@ -158,7 +175,7 @@ export class ChatView extends ItemView {
 		this.createMessageRenderer({
 			...toolMessage,
 			content:
-				"`" + toolCall.function.name + ": " + toolMessage.content + "`",
+				"```md\n" + toolCall.function.name + ": " + toolMessage.content + "\n```",
 		});
 
 		await this.chatAssistant();

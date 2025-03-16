@@ -15,12 +15,7 @@ export class ChatView extends ItemView {
 	textareaEl: TextAreaComponent;
 	submitButton: ButtonComponent;
 	outputContainerEl: HTMLElement;
-	chatHistory: Message[] = [
-		// {
-		// 	role: "system",
-		// 	content: systemPrompt,
-		// },
-	];
+	chatHistory: Message[] = [];
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -127,7 +122,6 @@ export class ChatView extends ItemView {
 	}
 
 	async chatTool(toolCall: ToolCall) {
-
 		let result = "Error handling tool call";
 		if (toolCall.function.name === "get_current_datetime") {
 			try {
@@ -139,8 +133,8 @@ export class ChatView extends ItemView {
 			} catch (error) {
 				console.error("Error handling datetime tool:", error);
 			}
-		} else if (toolCall.function.name === "no_tool_needed") {
-			result = "No tool needed";
+		} else if (toolCall.function.name === "respond_to_user") {
+			result = "Respond to the user";
 		}
 
 		const toolMessage: Message = {
@@ -151,11 +145,11 @@ export class ChatView extends ItemView {
 		this.chatHistory.push(toolMessage);
 		this.createMessageRenderer({
 			...toolMessage,
-			content: "`" + toolCall.function.name + ": " + toolMessage.content + "`",
+			content:
+				"`" + toolCall.function.name + ": " + toolMessage.content + "`",
 		});
 
 		await this.chatAssistant();
-
 	}
 
 	async onClose() {
@@ -164,8 +158,3 @@ export class ChatView extends ItemView {
 }
 
 const model = "llama3.2:latest"; // Temporary
-
-const systemPrompt = `
-You are an AI assistant that can use tools when required.
-Only use a tool if the user's question requires information that is not available in your knowledge base.
-`;

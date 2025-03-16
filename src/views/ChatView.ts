@@ -5,12 +5,10 @@ import {
 	ButtonComponent,
 	Scope,
 } from "obsidian";
-import ollama, { Message, Tool } from "ollama";
+import ollama, { Message, ToolCall } from "ollama";
 import { MarkdownRendererComponent } from "src/components/MarkdownRendererComponent";
-import { getAllToolDefinitions, getToolHandler } from "src/tools/toolRegistry";
 import { dateTimeTool, handleDateTimeTool } from "src/tools/dateTimeTool";
 import { noToolNeeded } from "src/tools/noTool";
-import { ToolCall } from "src/types/Tool";
 export const VIEW_TYPE_CHAT = "ollm-chat";
 
 export class ChatView extends ItemView {
@@ -94,10 +92,7 @@ export class ChatView extends ItemView {
 			model,
 			messages: this.chatHistory,
 			stream: true,
-			tools: getAllToolDefinitions().map((tool) => ({
-				type: "function",
-				function: tool.function,
-			})) as Tool[],
+			tools: [dateTimeTool, noToolNeeded],
 		});
 
 		const assistantMessage: Message = { role: "assistant", content: "" };
@@ -128,21 +123,18 @@ export class ChatView extends ItemView {
 
 	async chatTool(toolCall: ToolCall) {
 		let result = "Error handling tool call";
-		const handler = getToolHandler(toolCall.function.name);
-
-		if (handler) {
+		if (toolCall.function.name === "get_current_datetime") {
 			try {
 				const args =
 					typeof toolCall.function.arguments === "string"
 						? JSON.parse(toolCall.function.arguments)
 						: toolCall.function.arguments;
-				result = await handler(args);
+				result = await handleDateTimeTool(args);
 			} catch (error) {
-				console.error(
-					`Error handling ${toolCall.function.name} tool:`,
-					error
-				);
+				console.error("Error handling datetime tool:", error);
 			}
+		} else if (toolCall.function.name === "respond_to_user") {
+			result = "Respond to the user";
 		}
 
 		const toolMessage: Message = {
